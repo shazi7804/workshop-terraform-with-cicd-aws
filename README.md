@@ -419,4 +419,14 @@ notifications:
 
 
 
+**Step.10 使用 destroy 清場**
 
+```terraform
+$ terraform destroy
+```
+
+
+**Step.11 移除 backend**
+
+- delete S3
+- delete DynamoDB
