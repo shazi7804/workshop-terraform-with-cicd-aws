@@ -4,7 +4,7 @@
 
 ## Overview
 
-![](img/overview.png =100x100)
+![overview](./img/overview.png)
 
 ## LAB
 
