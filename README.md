@@ -80,7 +80,8 @@ Terraform has been successfully initialized!
 **Step.5 使用 [104corp/vpc](https://registry.terraform.io/modules/104corp/vpc/aws/) 模組快速建立 VPC。**
 
 - vpc.tf
-```
+
+```terraform
 module "vpc" {
   source  = "104corp/vpc/aws"
   version = "1.1.0"
@@ -88,8 +89,8 @@ module "vpc" {
   name            = "hub-workshop"
   cidr            = "10.0.0.0/16"
   azs             = ["ap-northeast-1a", "ap-northeast-1c"]
-  public_subnets  = ["10.0.128.0/20", "10.0.32.0/19"]
-  private_subnets = ["10.0.0.0/19", "10.0.144.0/20"]
+  public_subnets  = ["10.0.128.0/20", "10.0.144.0/20"]
+  private_subnets = ["10.0.0.0/19", "10.0.32.0/19"]
 
   # endpoint
   enable_s3_endpoint       = true
@@ -104,7 +105,7 @@ module "vpc" {
 ```
 
 
-**Step.6 測試 vpc resouce 建立**
+**Step.6 測試 VPC resouce 建立**
 
 初始化 vpc 模組
 
@@ -144,12 +145,234 @@ Terraform will perform the following actions:
 Plan: 20 to add, 0 to change, 0 to destroy.
 ```
 
+使用 terraform apply 確認佈署
+
+```
+$ terraform apply
+```
+
+檢查 VPC 建立成功。
 
 
+**Step.7 參數抽離**
 
+- vpc.tf
 
+```terraform
+module "vpc" {
+  source  = "104corp/vpc/aws"
+  version = "1.1.0"
 
+  name            = "hub-${var.env}"
+  cidr            = "${var.vpc_hub_cidr}"
+  azs             = ["${var.vpc_azs}"]
+  public_subnets  = ["${var.vpc_public_subnets}"]
+  private_subnets = ["${var.vpc_private_subnets}"]
 
+  # endpoint
+  enable_s3_endpoint       = true
+  enable_dynamodb_endpoint = true
+
+  tags = "${var.tags}"
+}
+```
+
+- variable.tf 宣告 variable 資料型態、預設值。
+
+```terraform
+/*
+  Define Global variable
+  example: Profile, Region, Terraform, Environment ..
+*/
+variable "env" {
+  description = "terraform workspace environment."
+  default     = ""
+}
+
+variable "tags" {
+  description = "A map of tags to add to all resources"
+  type        = "map"
+  default     = {}
+}
+
+/*
+  Define Resources variable
+  example: VPC, EC2 ..
+*/
+
+variable "vpc_hub_cidr" {
+  description = "VPC Hub CIDR Range"
+  type        = "string"
+  default     = ""
+}
+
+variable "vpc_azs" {
+  description = "VPC Availability zone"
+  type        = "list"
+  default     = []
+}
+
+variable "vpc_private_subnets" {
+  description = "VPC Private subnet CIDR"
+  type        = "list"
+  default     = []
+}
+
+variable "vpc_public_subnets" {
+  description = "VPC Public subnet CIDR"
+  type        = "list"
+  default     = []
+}
+
+variable "vpc_ntp_servers" {
+  description = "VPC DHCP NTP Servers"
+  type        = "list"
+  default     = []
+}
+```
+
+- main.auto.tfvars 儲存真實數值
+
+```terraform
+# Global
+region = "ap-northeast-1"
+env = "workshop"
+
+tags = {
+  Terraform   = "true"
+  Environment = "workshop"
+  Account     = "104aws"
+}
+
+# VPC Resource
+vpc_hub_cidr        = "10.0.0.0/16"
+vpc_azs             = ["ap-northeast-1a", "ap-northeast-1c"]
+vpc_private_subnets = ["10.0.128.0/20", "10.0.144.0/20"]
+vpc_public_subnets  = ["10.0.0.0/19", "10.0.32.0/19"]
+```
+
+測試 terraform plan 沒有 resource 被異動
+
+```
+$ terraform plan
+
+Plan: 0 to add, 0 to change, 0 to destroy.
+```
+
+**Step.8 使用 [104corp/web](https://registry.terraform.io/modules/104corp/web/aws/) 模組快速建立 EC2 Autoscaling。**
+
+- web.tf
+
+```
+data "aws_ami" "web_template_ami" {
+  most_recent      = true
+
+  filter {
+    name   = "name"
+    values = ["*CURRENT-667cd56b-fd1b-45f3-8604-1fadab38134d-ami-042dbd40e23385f3f.4"]
+  }
+}
+
+module "web" {
+  source  = "104corp/web/aws"
+  version = "0.0.12"
+
+  name                  = "${var.web_name}"
+  env                   = "${var.env}"
+  vpc_id                = "${module.vpc.vpc_id}"
+  asg_min_size          = "${var.web_asg_min_size}"
+  asg_max_size          = "${var.web_asg_max_size}"
+  asg_desired_capacity  = "${var.web_asg_desired_capacity}"
+  asg_health_check_type = "${var.web_asg_health_check_type}"
+  instance_type         = "${var.web_instance_type}"
+  image_id              = "${data.aws_ami.web_template_ami.image_id}"
+  ec2_subnet_ids        = "${module.vpc.private_subnets}"
+  alb_subnet_ids        = "${module.vpc.public_subnets}"
+  key_name              = ""
+
+  # with CI / CD setting
+  travisci_enable   = true
+  codedeploy_enable = true
+  web_ingress_source_security_group_id = [
+    {
+      rule                     = "http-80-tcp"
+      source_security_group_id = "${module.web.alb_sg_id}"
+    },
+  ]
+  web_number_of_ingress_source_security_group_id = 1
+  alb_target_groups_defaults                     = "${var.web_alb_target_groups_defaults}"
+
+  tags                        = "${merge(var.tags, var.web_tags)}"
+}
+```
+
+- 把 web 變數宣告至 variable.tf
+
+```
+/*
+  Define Project variable
+  example: name, owner, Tags..
+*/
+variable "web_name" {
+  description = "A string of project name for web."
+}
+
+variable "web_asg_min_size" {
+  description = "A string of autoscaling instance min size for web"
+}
+
+variable "web_asg_max_size" {
+  description = "A string of autoscaling instance max size for web"
+}
+
+variable "web_asg_desired_capacity" {
+  description = "A string of autoscaling instance desired capacity size for web"
+}
+
+variable "web_asg_health_check_type" {
+  description = "A string of autoscaling health check type for web"
+}
+
+variable "web_instance_type" {
+  description = "A string of instance type for web"
+}
+
+variable "web_alb_target_groups_defaults" {
+  description = "A map of target groups default rule for web"
+  type        = "map"
+  default     = {}
+}
+
+variable "web_tags" {
+  description = "A map of project tags for web"
+  type        = "map"
+  default     = {}
+}
+```
+
+- 增加 web 參數至 main.auto.tfvars
+
+```terraform
+web_name                       = "workshop-web"
+web_instance_type              = "t2.nano"
+web_asg_min_size               = 1
+web_asg_max_size               = 2
+web_asg_desired_capacity       = 1
+web_asg_health_check_type      = "ELB"
+web_alb_target_groups_defaults = {
+  "cookie_duration"                  = 86400
+  "deregistration_delay"             = 60
+  "health_check_interval"            = 5
+  "health_check_healthy_threshold"   = 2
+  "health_check_path"                = "/"
+  "health_check_port"                = "traffic-port"
+  "health_check_timeout"             = 4
+  "health_check_unhealthy_threshold" = 2
+  "health_check_matcher"             = "200"
+  "stickiness_enabled"               = false
+  "target_type"                      = "instance"
+}
+```
 
 
 
