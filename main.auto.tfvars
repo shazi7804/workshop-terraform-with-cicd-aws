@@ -5,6 +5,7 @@ env = "workshop"
 
 tags = {
   Terraform   = "true"
+  Version     = "v1.0.0"
   Environment = "workshop"
   Account     = "104aws"
 }
