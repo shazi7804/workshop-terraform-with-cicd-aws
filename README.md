@@ -31,8 +31,8 @@ $ export AWS_SECRET_ACCESS_KEY=GoO4f....
 
 - S3 bucket：workshop-terraform-2e21m1dpq04fwfp (Without ACL and Policy)
 
-[x] Versioning：Keep all versions of an object in the same bucket.
-[x] Object lock：Permanently allow objects in this bucket to be locked.
+- [x] Versioning：Keep all versions of an object in the same bucket.
+- [x] Object lock：Permanently allow objects in this bucket to be locked.
 
 - Dynamodb
   - Table Name：terraform-state-locking
