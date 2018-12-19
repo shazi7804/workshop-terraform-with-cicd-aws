@@ -15,41 +15,39 @@ infrastructure as code 該怎麼入手 ? 這個 WorkShop 體驗從零到高手�
 
 ## LAB
 
-**step.1 建立給 Terraform 使用的 IAM User (AdministratorAccess)**
+**Step.1 建立給 Terraform 使用的 IAM User (AdministratorAccess)**
 
 Terraform 是唯一該帳號的資源建立者，所以權限給予 AdministratorAccess，如果有確定該帳號不必要的服務，也可以從 Policy 控制 Terraform 的 IAM User 權限。
 
-將 AWS Key export 到環境變數給 Terraform 使用。
+將 AWS Key export 環境變數給 Terraform 使用。
 
 ```
 $ export AWS_ACCESS_KEY_ID=AKIA.....
 $ export AWS_SECRET_ACCESS_KEY=GoO4f....
 ```
 
-**step.2 建立 S3 和 DynamoDB 作為 State backend**
+
+**Step.2 建立 S3 和 DynamoDB 作為 State backend**
 
 - S3 bucket：workshop-terraform-2e21m1dpq04fwfp (Without ACL and Policy)
+
 [x] Versioning：Keep all versions of an object in the same bucket.
 [x] Object lock：Permanently allow objects in this bucket to be locked.
-
-Manage public access control lists (ACLs) for this bucket
-[ ] Block new public ACLs and uploading public objects (Recommended)
-[ ] Remove public access granted through public ACLs (Recommended)
-[ ] Block new public bucket policies (Recommended)
-[ ] Block public and cross-account access if bucket has public policies (Recommended)
 
 - Dynamodb
   - Table Name：terraform-state-locking
   - Primary partition key：LockID (String)
 
-**step.3 建立 Github repository，clone 到本機**
+
+**Step.3 建立 Github repository，clone 到本機**
 
 ```
 # example
 $ git clone https://github.com/shazi7804/workshop-terraform-with-cicd-aws
 ```
 
-**step.4 建立 terraform 主要設定檔 main.tf，加入 backend 和 provider。**
+
+**Step.4 建立 terraform 主要設定檔 main.tf，加入 backend 和 provider。**
 
 - main.tf
 ```
@@ -78,7 +76,8 @@ Initializing provider plugins...
 Terraform has been successfully initialized!
 ```
 
-**step.5 使用 [104corp/vpc](https://registry.terraform.io/modules/104corp/vpc/aws/) 模組快速建立 VPC。**
+
+**Step.5 使用 [104corp/vpc](https://registry.terraform.io/modules/104corp/vpc/aws/) 模組快速建立 VPC。**
 
 - vpc.tf
 ```
@@ -104,7 +103,8 @@ module "vpc" {
 }
 ```
 
-**step.6 測試 vpc resouce 建立**
+
+**Step.6 測試 vpc resouce 建立**
 
 初始化 vpc 模組
 
