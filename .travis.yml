@@ -1,0 +1,23 @@
+language: bash
+cache:
+  directories:
+    - .terraform
+env:
+  global:
+    - TFLINT_VER='v0.7.1'
+    - TERRAFORM_VER='0.11.7'
+before_install:
+  # Install Terraform
+  - "wget https://releases.hashicorp.com/terraform/0.11.7/terraform_${TERRAFORM_VER}_linux_amd64.zip"
+  - "unzip terraform_${TERRAFORM_VER}_linux_amd64.zip && chmod +x terraform"
+  # Install dependencies
+  - "./terraform init"
+  - "./terraform fmt"
+script:
+  # Test case
+  - "./terraform plan"
+  # terraform apply deploy
+after_success:
+  - "./terraform apply -auto-approve"
+notifications:
+  email: false

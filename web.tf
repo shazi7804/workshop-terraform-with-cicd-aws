@@ -4,7 +4,7 @@ data "aws_ami" "web_template_ami" {
 
   filter {
     name   = "name"
-    values = ["*CURRENT-667cd56b-fd1b-45f3-8604-1fadab38134d-ami-042dbd40e23385f3f.4"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
   }
 }
 
