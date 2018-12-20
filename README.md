@@ -264,12 +264,17 @@ Plan: 0 to add, 0 to change, 0 to destroy.
 - web.tf
 
 ```
-data "aws_ami" "web_template_ami" {
-  most_recent      = true
+data "aws_ami" "workshop" {
+  most_recent = true
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
 
   filter {
     name   = "name"
-    values = ["*CURRENT-667cd56b-fd1b-45f3-8604-1fadab38134d-ami-042dbd40e23385f3f.4"]
+    values = ["workshop-ami-*"]
   }
 }
 

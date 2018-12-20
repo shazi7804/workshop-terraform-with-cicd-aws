@@ -1,10 +1,14 @@
-data "aws_ami" "web_template_ami" {
-  most_recent      = true
-  #executable_users = ["self"]
+data "aws_ami" "workshop" {
+  most_recent = true
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
+    values = ["workshop-ami-*"]
   }
 }
 
@@ -20,7 +24,7 @@ module "web" {
   asg_desired_capacity  = "${var.web_asg_desired_capacity}"
   asg_health_check_type = "${var.web_asg_health_check_type}"
   instance_type         = "${var.web_instance_type}"
-  image_id              = "${data.aws_ami.web_template_ami.image_id}"
+  image_id              = "${data.aws_ami.workshop.image_id}"
   ec2_subnet_ids        = "${module.vpc.private_subnets}"
   alb_subnet_ids        = "${module.vpc.public_subnets}"
   key_name              = ""
