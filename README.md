@@ -247,8 +247,8 @@ tags = {
 # VPC Resource
 vpc_hub_cidr        = "10.0.0.0/16"
 vpc_azs             = ["ap-northeast-1a", "ap-northeast-1c"]
-vpc_private_subnets = ["10.0.128.0/20", "10.0.144.0/20"]
-vpc_public_subnets  = ["10.0.0.0/19", "10.0.32.0/19"]
+vpc_public_subnets = ["10.0.128.0/20", "10.0.144.0/20"]
+vpc_private_subnets  = ["10.0.0.0/19", "10.0.32.0/19"]
 ```
 
 測試 terraform plan 沒有 resource 被異動
